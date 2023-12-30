@@ -1,0 +1,41 @@
+# ApplicationSet manifest for the cluster-bootstrap application with clusters generator
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cluster-bootstrap
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - clusters:
+      selector:
+        matchLabels:
+          argocd.argoproj.io/secret-type: cluster
+  template:
+    metadata:
+      name: '{{.name}}-cluster-bootstrap'
+    spec:
+      project: "default"
+      source:
+        repoURL: "https://github.com/nahidupa/cluster-bootstrap-manifest.git"
+        targetRevision: HEAD
+        path: bootstrap-apps
+      destination:
+        server: '{{.server}}'
+        namespace: cluster-bootstrap
+# sync policy to create namespace if not exists
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+        - Validate=false
+        - Prune=true
+        - SelfHeal=true
+        - ApplyOutOfSyncOnly=true
+        - Force=true
+        - Retry=true
+        - RetryTimeout=60
+        - RetryBackoff=1
+
